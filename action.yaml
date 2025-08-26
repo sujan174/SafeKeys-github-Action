@@ -17,15 +17,15 @@ inputs:
 
   # Self-Hosted Vault-specific inputs
   self_hosted_vault_url:
-    description: 'https://safekeys-vault-server.onrender.com'
+    description: 'The URL of the self-hosted vault server.'
     required: false
   self_hosted_vault_api_key:
-    description: "iuweygc-fiuqwgc-ewirufh-eqrwiouyf"
+    description: 'The API key for the self-hosted vault.'
     required: false
 
   # HashiCorp Vault-specific inputs
   vault_addr:
-    description: 'HashicCorp vault affress'
+    description: 'The address of the HashiCorp Vault server.'
     required: false
   vault_token:
     description: 'The token for authenticating with HashiCorp Vault.'
