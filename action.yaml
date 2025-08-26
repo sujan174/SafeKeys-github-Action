@@ -51,7 +51,7 @@ runs:
 
     - name: Run Gitleaks Scanner
       run: |
-        gitleaks detect --source . --report-path gitleaks-report.json --config-path ${{ github.action_path }}/gitleaks.toml -v || true
+        gitleaks detect --source . --report-path gitleaks-report.json -c ${{ github.action_path }}/gitleaks.toml -v || true
       shell: bash
 
     - name: Setup Node.js
