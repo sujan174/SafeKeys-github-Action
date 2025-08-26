@@ -34,7 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleHashicorpSecrets = handleHashicorpSecrets;
-const Vault = __importStar(require("node-vault"));
+const Vault = require('node-vault');
 const path = __importStar(require("path"));
 async function handleHashicorpSecrets(leaks, vaultAddr, vaultToken) {
     const vault = Vault({

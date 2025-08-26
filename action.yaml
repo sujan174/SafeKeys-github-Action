@@ -25,7 +25,7 @@ inputs:
 
   # HashiCorp Vault-specific inputs
   vault_addr:
-    description: ''
+    description: 'HashicCorp vault affress'
     required: false
   vault_token:
     description: 'The token for authenticating with HashiCorp Vault.'

@@ -1,4 +1,4 @@
-import * as Vault from 'node-vault';
+const Vault = require('node-vault');
 import * as path from 'path';
 import { Leak } from '../types';
 
