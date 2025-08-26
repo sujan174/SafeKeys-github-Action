@@ -1,0 +1,77 @@
+name: 'Secrets Vault Scanner'
+description: 'Scans for hardcoded secrets and automatically adds them to a configured vault.'
+author: 'sjn174'
+
+inputs:
+  vault_provider:
+    description: "The secrets manager to use ('aws', 'hashicorp', or 'self-hosted')."
+    required: true
+
+  # AWS-specific inputs
+  aws_role_to_assume:
+    description: 'The IAM Role ARN to assume for AWS authentication (via OIDC).'
+    required: false
+  aws_region:
+    description: 'The AWS region for the Secrets Manager.'
+    required: false
+
+  # Self-Hosted Vault-specific inputs
+  self_hosted_vault_url:
+    description: 'The URL of the self-hosted vault server.'
+    required: false
+  self_hosted_vault_api_key:
+    description: "iuweygc-fiuqwgc-ewirufh-eqrwiouyf"
+    required: false
+
+  # HashiCorp Vault-specific inputs
+  vault_addr:
+    description: 'https://safekeys-vault-server.onrender.com'
+    required: false
+  vault_token:
+    description: 'The token for authenticating with HashiCorp Vault.'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure AWS Credentials
+      if: inputs.vault_provider == 'aws'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Install Gitleaks
+      run: |
+        wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
+        tar -xzf gitleaks_8.18.2_linux_x64.tar.gz
+        chmod +x gitleaks
+        sudo mv gitleaks /usr/local/bin/
+      shell: bash
+
+    - name: Run Gitleaks Scanner
+      run: |
+        gitleaks detect --source . --report-path gitleaks-report.json --config-path ${{ github.action_path }}/gitleaks.toml -v || true
+      shell: bash
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Dependencies
+      run: npm install
+      shell: bash
+      working-directory: ${{ github.action_path }}
+
+    - name: Process Leaks and Update Vault
+      run: node ${{ github.action_path }}/dist/index.js
+      shell: bash
+      env:
+        INPUT_VAULT_PROVIDER: ${{ inputs.vault_provider }}
+        INPUT_AWS_REGION: ${{ inputs.aws_region }}
+        INPUT_VAULT_ADDR: ${{ inputs.vault_addr }}
+        INPUT_VAULT_TOKEN: ${{ inputs.vault_token }}
+        INPUT_SELF_HOSTED_VAULT_URL: ${{ inputs.self_hosted_vault_url }}
+        INPUT_SELF_HOSTED_VAULT_API_KEY: ${{ inputs.self_hosted_vault_api_key }}
+        GITHUB_WORKSPACE: ${{ github.workspace }}

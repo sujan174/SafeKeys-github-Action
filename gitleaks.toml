@@ -1,0 +1,74 @@
+# action.yml - Defines the GitHub Action's metadata, inputs, and execution steps.
+name: 'AI Secrets Vault Scanner'
+description: 'Scans for hardcoded secrets and automatically adds them to a configured vault.'
+author: 'Your GitHub Org'
+
+# This section defines all possible inputs for the action.
+# Users will provide values for either the 'aws' set or the 'hashicorp' set.
+inputs:
+  vault_provider:
+    description: "The secrets manager to use ('aws' or 'hashicorp')."
+    required: true
+  
+  # AWS-specific inputs
+  aws_role_to_assume:
+    description: 'The IAM Role ARN to assume for AWS authentication (via OIDC).'
+    required: false
+  aws_region:
+    description: 'The AWS region for the Secrets Manager.'
+    required: false
+
+  # HashiCorp Vault-specific inputs
+  vault_addr:
+    description: 'The address of the HashiCorp Vault server.'
+    required: false
+  vault_token:
+    description: 'The token for authenticating with HashiCorp Vault.'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    # This step ONLY runs if the user has set vault_provider to 'aws'.
+    - name: Configure AWS Credentials
+      if: inputs.vault_provider == 'aws'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume }}
+        aws-region: ${{ inputs.aws_region }}
+
+    # The following steps run for both providers
+    - name: Install Gitleaks
+      run: |
+        wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
+        tar -xzf gitleaks_8.18.2_linux_x64.tar.gz
+        chmod +x gitleaks
+        sudo mv gitleaks /usr/local/bin/
+      shell: bash
+
+    - name: Run Gitleaks Scanner
+      run: |
+        gitleaks detect --source . --report-path gitleaks-report.json --config-path ${{ github.action_path }}/gitleaks.toml -v || true
+      shell: bash
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Dependencies
+      run: npm install
+      shell: bash
+      working-directory: ${{ github.action_path }}
+
+    # This final step runs the main script. The script itself contains the logic
+    # to check the vault_provider and call the correct handler.
+    - name: Process Leaks and Update Vault
+      run: node ${{ github.action_path }}/dist/index.js
+      shell: bash
+      env:
+        INPUT_VAULT_PROVIDER: ${{ inputs.vault_provider }}
+        INPUT_AWS_REGION: ${{ inputs.aws_region }}
+        INPUT_VAULT_ADDR: ${{ inputs.vault_addr }}
+        INPUT_VAULT_TOKEN: ${{ inputs.vault_token }}
+        GITHUB_WORKSPACE: ${{ github.workspace }}
