@@ -2,8 +2,7 @@ name: 'Test Local Action'
 
 on:
   push:
-    branches:
-      - main
+
 
 jobs:
   test-self-hosted-action:
