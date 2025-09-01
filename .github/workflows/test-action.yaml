@@ -13,7 +13,7 @@ jobs:
 
       - name: Create fake secret file for testing
         run: |
-          echo "api_key = 'apikey" > test-secrets.txt
+          echo "api_key = 'sefgbesfgeswgetswgh" > test-secrets.txt
 
       - name: Run Secrets Vault Scanner
         uses: ./
